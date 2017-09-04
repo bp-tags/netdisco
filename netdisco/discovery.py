@@ -38,66 +38,44 @@ class NetworkDiscovery(object):
         """Initialize the discovery."""
         self.limit_discovery = limit_discovery
 
-        self.mdns = MDNS()
-        self.ssdp = SSDP()
-        self.gdm = GDM()
-        self.lms = LMS()
-        self.tellstick = Tellstick()
-        self.fluxled = FluxLed()
-        self.daikin = Daikin()
-        # self.samsungac = SamsungAC()
-        self.phue = PHueNUPnPDiscovery()
         self.discoverables = {}
+        self.scanners = []
+        self.protocols = {}
 
         self._load_device_support()
 
+        unique_scanners = {discoverable.get_scanner() for discoverable in self.discoverables.values()}
+
+        for scanner in unique_scanners:
+            self.scanners.append(scanner)
+
         self.is_discovering = False
+
+    def get_protocol(self, protocol_type, protocol_class):
+        if not self.protocols[protocol_type]:
+            self.protocols[protocol_type] = protocol_class()
+        return self.protocols[protocol_type]
 
     def scan(self):
         """Start and tells scanners to scan."""
         if not self.is_discovering:
-            self.mdns.start()
+            # Start all discovery processes in parallel
+            for scanner in self.scanners:
+                scanner.start()
             self.is_discovering = True
 
-        # Start all discovery processes in parallel
-        ssdp_thread = threading.Thread(target=self.ssdp.scan)
-        ssdp_thread.start()
-
-        gdm_thread = threading.Thread(target=self.gdm.scan)
-        gdm_thread.start()
-
-        lms_thread = threading.Thread(target=self.lms.scan)
-        lms_thread.start()
-
-        tellstick_thread = threading.Thread(target=self.tellstick.scan)
-        tellstick_thread.start()
-
-        fluxled_thread = threading.Thread(target=self.fluxled.scan)
-        fluxled_thread.start()
-
-        daikin_thread = threading.Thread(target=self.daikin.scan)
-        daikin_thread.start()
-
-        # self.samsungac.scan()
-
-        phue_thread = threading.Thread(target=self.phue.scan)
-        phue_thread.start()
-
-        # Wait for all discovery processes to complete
-        ssdp_thread.join()
-        gdm_thread.join()
-        lms_thread.join()
-        tellstick_thread.join()
-        fluxled_thread.join()
-        daikin_thread.join()
-        phue_thread.join()
+        # Wait for all foreground discovery processes to complete
+        for scanner in self.scanners:
+            scanner.join()
 
     def stop(self):
         """Turn discovery off."""
         if not self.is_discovering:
             return
 
-        self.mdns.stop()
+        # Stop all background scanners
+        for scanner in self.scanners:
+            scanner.stop()
 
         self.is_discovering = False
 

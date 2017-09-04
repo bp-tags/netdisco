@@ -1,6 +1,8 @@
 """Discover Samsung Smart AC devices."""
 from . import BaseDiscoverable
-
+from . import ForegroundScanner
+from ..samsungac import SamsungAC
+from . import Scanner
 
 class Discoverable(BaseDiscoverable):
     """Add support for discovering a Samsung Smart AC device."""
@@ -13,3 +15,6 @@ class Discoverable(BaseDiscoverable):
         """Get all the Samsung Smart AC details."""
         return []
         # return self._netdis.samsungac.entries
+
+    # def get_scanner(self):
+    #   return ForegroundScanner(SamsungAC())

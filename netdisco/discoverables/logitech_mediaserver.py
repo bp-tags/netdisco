@@ -1,6 +1,7 @@
 """Discover Logitech Media Server."""
 from . import BaseDiscoverable
-
+from . import ForegroundScanner
+from ..lms import LMS
 
 class Discoverable(BaseDiscoverable):
     """Add support for discovering Logitech Media Server."""
@@ -12,3 +13,6 @@ class Discoverable(BaseDiscoverable):
     def get_entries(self):
         """Get all the Logitech Media Server details."""
         return self.netdis.lms.entries
+
+    def get_scanner(self):
+        return ForegroundScanner(LMS())

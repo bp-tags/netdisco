@@ -1,6 +1,7 @@
 """Discover Fluxled devices."""
 from . import BaseDiscoverable
-
+from . import ForegroundScanner
+from ..flux_led import FluxLed
 
 class Discoverable(BaseDiscoverable):
     """Add support for discovering a Fluxled device."""
@@ -12,3 +13,6 @@ class Discoverable(BaseDiscoverable):
     def get_entries(self):
         """Get all the Fluxled details."""
         return self._netdis.fluxled.entries
+
+    def get_scanner(self):
+        return ForegroundScanner(FluxLed())

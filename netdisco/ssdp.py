@@ -35,6 +35,9 @@ class SSDP(object):
         self.last_scan = None
         self._lock = threading.RLock()
 
+    def get_scanner(self):
+        return ForegroundScanner(self)
+
     def scan(self):
         """Scan the network."""
         with self._lock:

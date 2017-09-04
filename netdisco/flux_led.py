@@ -51,10 +51,13 @@ class FluxLed(object):
     def update(self):
         """Scan network for Fluxled devices."""
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.bind(('', DISCOVERY_PORT))
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.settimeout(DISCOVERY_TIMEOUT.seconds)
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.bind(('', DISCOVERY_PORT))
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.settimeout(DISCOVERY_TIMEOUT.seconds)
+        except:
+            return
 
         # send query to every device in every network connected to
         LOG.debug('querying hosts on networks: %s', self.networks)

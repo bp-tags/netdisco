@@ -1,6 +1,11 @@
 """Provides helpful stuff for discoverables."""
 # pylint: disable=abstract-method
+import threading
 
+from .. import Scanner
+from ..ssdp import SSDP
+from ..gdm import GDM
+from ..mdns import MDNS
 
 class BaseDiscoverable(object):
     """Base class for discoverable services or device types."""
@@ -26,9 +31,14 @@ class BaseDiscoverable(object):
         """Return all the discovered entries."""
         raise NotImplementedError()
 
+    def get_scanner(self):
+        """Return all the discovered entries."""
+        return Scanner()
 
 class SSDPDiscoverable(BaseDiscoverable):
     """uPnP discoverable base class."""
+
+    _scanner = ForegroundScanner(SSDP())
 
     def __init__(self, netdis):
         """Initialize SSDPDiscoverable."""
@@ -42,6 +52,9 @@ class SSDPDiscoverable(BaseDiscoverable):
     def info_from_entry(self, entry):
         """Get most important info, by default the description location."""
         return entry.values['location']
+
+    def get_scanner(self):
+        return self._scanner
 
     # Helper functions
 
@@ -58,11 +71,14 @@ class SSDPDiscoverable(BaseDiscoverable):
 class MDNSDiscoverable(BaseDiscoverable):
     """mDNS Discoverable base class."""
 
+    _scanner = BackgroundScanner(MDNS())
+
     def __init__(self, netdis, typ):
         """Initialize MDNSDiscoverable."""
         self.netdis = netdis
         self.typ = typ
         self.services = {}
+        self.mdns = netdis.get_protocol('mdns', MDNS)
 
         netdis.mdns.register_service(self)
 
@@ -73,6 +89,9 @@ class MDNSDiscoverable(BaseDiscoverable):
     def is_discovered(self):
         """Return True if any device has been discovered."""
         return len(self.get_entries()) > 0
+
+    def get_scanner(self):
+        return self._scanner
 
     # pylint: disable=unused-argument
     def remove_service(self, zconf, typ, name):
@@ -119,6 +138,8 @@ class MDNSDiscoverable(BaseDiscoverable):
 class GDMDiscoverable(BaseDiscoverable):
     """GDM discoverable base class."""
 
+    _scanner = ForegroundScanner(GDM())
+
     def __init__(self, netdis):
         """Initialize GDMDiscoverable."""
         self.netdis = netdis
@@ -131,6 +152,9 @@ class GDMDiscoverable(BaseDiscoverable):
         """Get most important info, by default the description location."""
         return 'https://%s:%s/' % (entry.values['location'],
                                    entry.values['port'])
+
+    def get_scanner(self):
+        return self._scanner
 
     def find_by_content_type(self, value):
         """Find entries based on values from their content_type."""
